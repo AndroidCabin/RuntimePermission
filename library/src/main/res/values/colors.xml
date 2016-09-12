@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+
+    <color name="black_0_percent">#00000000</color>
+    <color name="black_5_percent">#0C000000</color>
+    <color name="black_10_percent">#19000000</color>
+    <color name="black_15_percent">#21000000</color>
+    <color name="black_20_percent">#33000000</color>
+    <color name="black_25_percent">#3F000000</color>
+    <color name="black_30_percent">#4C000000</color>
+    <color name="black_35_percent">#59000000</color>
+    <color name="black_40_percent">#66000000</color>
+    <color name="black_45_percent">#72000000</color>
+    <color name="black_50_percent">#7F000000</color>
+    <color name="black_55_percent">#8C000000</color>
+    <color name="black_60_percent">#99000000</color>
+    <color name="black_65_percent">#A5000000</color>
+    <color name="black_70_percent">#B2000000</color>
+    <color name="black_75_percent">#BF000000</color>
+    <color name="black_80_percent">#CC000000</color>
+    <color name="black_85_percent">#D8000000</color>
+    <color name="black_90_percent">#E5000000</color>
+    <color name="black_95_percent">#F2000000</color>
+    <color name="black_100_percent">#FF000000</color>
+    <color name="half_transparent_white">#80FFFFFF</color>
+</resources>
