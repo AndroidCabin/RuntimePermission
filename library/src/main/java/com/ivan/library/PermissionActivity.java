@@ -8,8 +8,8 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.os.ResultReceiver;
 import android.support.v7.app.AppCompatActivity;
-
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -29,26 +29,66 @@ public class PermissionActivity extends AppCompatActivity {
     private Set<String> mPermissions;
     private int mRequestCode;
     private Bundle mBundleData;
+    private ResultReceiver mPermissionResultReceiver;
 
     public static final int REQUEST_CODE_PERMISSION = 0x1001;
-    private static final String EXTRA_PERMISSIONS = "com_ivan_library_PermissionActivity_permissions";
-    public static final String EXTRA_REQUEST_CODE = "com_ivan_library_PermissionActivity_request_code";
-    public static final String EXTRA_DATA_BUNDLE = "com_ivan_library_PermissionActivity_data_bundle";
 
+    /**
+     * 启动Activity
+     *
+     * @param context   Context
+     * @param requestCode 请求码
+     * @param permission 要申请的权限
+     */
     public static void startActivity(Context context, int requestCode, String... permission) {
+        startActivity(context, requestCode, null, permission);
+    }
+
+    /**
+     * 启动Activity
+     *
+     * @param context  Context
+     * @param data    存放一些额外的数据
+     * @param requestCode 请求码
+     * @param permission 要申请的权限
+     */
+    public static void startActivity(Context context, Bundle data, int requestCode, String... permission) {
+        startActivity(context, data, requestCode, null, permission);
+    }
+
+    /**
+     * 启动Activity
+     *
+     * @param context  Context
+     * @param requestCode 请求码
+     * @param resultReceiver   接受结果的ResultReceiver对象
+     * @param permission 要申请的权限
+     */
+    public static void startActivity(Context context, int requestCode, PermissionResultReceiver resultReceiver, String... permission) {
         Intent intent = new Intent(context, PermissionActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(EXTRA_REQUEST_CODE, requestCode);
-        intent.putExtra(EXTRA_PERMISSIONS, permission);
+        intent.putExtra(PermissionConst.EXTRA_REQUEST_CODE, requestCode);
+        intent.putExtra(PermissionConst.EXTRA_PERMISSIONS, permission);
+        intent.putExtra(PermissionConst.EXTRA_RESULT_RECEIVER, resultReceiver);
         context.startActivity(intent);
     }
 
-    public static void startActivity(Context context, Bundle data, int requestCode, String... permission) {
+    /**
+     * 启动Activity
+     *
+     * @param context  Context
+     * @param data    存放一些额外的数据
+     * @param requestCode 请求码
+     * @param resultReceiver   接受结果的ResultReceiver对象
+     * @param permission 要申请的权限
+     */
+    public static void startActivity(Context context, Bundle data, int requestCode, PermissionResultReceiver resultReceiver, String... permission) {
         Intent intent = new Intent(context, PermissionActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(EXTRA_REQUEST_CODE, requestCode);
-        intent.putExtra(EXTRA_PERMISSIONS, permission);
-        intent.putExtra(EXTRA_DATA_BUNDLE, data);
+        intent.putExtra(PermissionConst.EXTRA_REQUEST_CODE, requestCode);
+        intent.putExtra(PermissionConst.EXTRA_PERMISSIONS, permission);
+        intent.putExtra(PermissionConst.EXTRA_DATA_BUNDLE, data);
+        intent.putExtra(PermissionConst.EXTRA_RESULT_RECEIVER, resultReceiver);
         context.startActivity(intent);
     }
 
@@ -73,18 +113,29 @@ public class PermissionActivity extends AppCompatActivity {
      * @param intent intent
      */
     private void getParameters(Intent intent) {
-        if (intent != null && intent.hasExtra(EXTRA_PERMISSIONS)) {
+        if (intent == null) {
+            return;
+        }
+        if (intent.hasExtra(PermissionConst.EXTRA_PERMISSIONS)) {
             mPermissions = new HashSet<>();
-            mRequestCode = intent.getIntExtra(EXTRA_REQUEST_CODE, 0);
-            mBundleData = intent.getBundleExtra(EXTRA_DATA_BUNDLE);
+            mRequestCode = intent.getIntExtra(PermissionConst.EXTRA_REQUEST_CODE, 0);
+            mBundleData = intent.getBundleExtra(PermissionConst.EXTRA_DATA_BUNDLE);
             if (mBundleData == null) {
                 mBundleData = new Bundle();
             }
-            Collections.addAll(mPermissions, intent.getStringArrayExtra(EXTRA_PERMISSIONS));
+            Collections.addAll(mPermissions, intent.getStringArrayExtra(PermissionConst.EXTRA_PERMISSIONS));
+            mPermissionResultReceiver = intent.getParcelableExtra(PermissionConst.EXTRA_RESULT_RECEIVER);
         } else {
             Intent i = new Intent(PermissionRequestResultReceiver.ACTION_REQUEST_PERMISSION_RESULT);
             i.putExtra(PermissionRequestResultReceiver.DATA_RESULT, true);
             LocalBroadcastManager.getInstance(PermissionActivity.this).sendBroadcast(i);
+            mPermissionResultReceiver = intent.getParcelableExtra(PermissionConst.EXTRA_RESULT_RECEIVER);
+            if (mPermissionResultReceiver != null) {
+                Bundle b = new Bundle();
+                b.putInt(PermissionConst.EXTRA_REQUEST_CODE, intent.getIntExtra(PermissionConst.EXTRA_REQUEST_CODE, 0));
+                b.putBoolean(PermissionConst.EXTRA_PERMISSION_RESULT_GRANTED, true);
+                mPermissionResultReceiver.send(PermissionConst.RESULT_CODE_OK, b);
+            }
             finish();
         }
     }
@@ -121,19 +172,39 @@ public class PermissionActivity extends AppCompatActivity {
                     // permission was granted, yay! Do the task you need to do.
                     Intent intent = new Intent(PermissionRequestResultReceiver.ACTION_REQUEST_PERMISSION_RESULT);
                     intent.putExtra(PermissionRequestResultReceiver.DATA_RESULT, true);
-                    intent.putExtra(EXTRA_REQUEST_CODE, mRequestCode);
-                    intent.putExtra(EXTRA_DATA_BUNDLE, mBundleData);
+                    intent.putExtra(PermissionConst.EXTRA_REQUEST_CODE, mRequestCode);
+                    intent.putExtra(PermissionConst.EXTRA_DATA_BUNDLE, mBundleData);
                     LocalBroadcastManager.getInstance(PermissionActivity.this).sendBroadcast(intent);
+
+                    if (mPermissionResultReceiver != null) {
+                        Bundle b = new Bundle();
+                        b.putInt(PermissionConst.EXTRA_REQUEST_CODE, mRequestCode);
+                        b.putBoolean(PermissionConst.EXTRA_PERMISSION_RESULT_GRANTED, true);
+                        mPermissionResultReceiver.send(PermissionConst.RESULT_CODE_OK, b);
+                    }
+
                 } else {
                     // permission denied, boo! Disable the functionality that depends on this permission.
                     Intent intent = new Intent(PermissionRequestResultReceiver.ACTION_REQUEST_PERMISSION_RESULT);
                     intent.putExtra(PermissionRequestResultReceiver.DATA_RESULT, false);
-                    intent.putExtra(EXTRA_REQUEST_CODE, mRequestCode);
-                    intent.putExtra(EXTRA_DATA_BUNDLE, mBundleData);
+                    intent.putExtra(PermissionConst.EXTRA_REQUEST_CODE, mRequestCode);
+                    intent.putExtra(PermissionConst.EXTRA_DATA_BUNDLE, mBundleData);
                     LocalBroadcastManager.getInstance(PermissionActivity.this).sendBroadcast(intent);
+
+                    if (mPermissionResultReceiver != null) {
+                        Bundle b = new Bundle();
+                        b.putInt(PermissionConst.EXTRA_REQUEST_CODE, mRequestCode);
+                        b.putBoolean(PermissionConst.EXTRA_PERMISSION_RESULT_GRANTED, false);
+                        mPermissionResultReceiver.send(PermissionConst.RESULT_CODE_OK, b);
+                    }
                 }
             }
         }
         finish();
+    }
+
+    @Override
+    public void overridePendingTransition(int enterAnim, int exitAnim) {
+        super.overridePendingTransition(R.anim.no_anim, R.anim.no_anim);
     }
 }

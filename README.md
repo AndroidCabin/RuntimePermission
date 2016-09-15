@@ -8,9 +8,9 @@ Here, we got a way.
 
 First, we start an Activity with transparent theme from the background. 
 Then we request permissions and handle the result in the transparent Activity. 
-Finally, the result will be delivered via a BroadcastReceriver.
+Finally, the result will be delivered via a BroadcastReceiver.
 
-the code like below:
+Here is two ways to request permission. In the first way, we use it in a Service. The code like below:
 ```java
 public class MyService extends Service implements OnPermissionRequestResult {
 
@@ -52,4 +52,22 @@ public class MyService extends Service implements OnPermissionRequestResult {
         Toast.makeText(MyService.this, "permission denied " + data.get("data"), Toast.LENGTH_SHORT).show();
     }
 }
+```
+
+In the Second way, we use callback. The code like below:
+```Java
+    FuckPermissionRequest.newInstance(context)
+        .requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        .onPermissionDenied(new OnPermissionDeniedListener() {
+            @Override
+            public void onPermissionDenied(int requestCode, int resultCode, Bundle data) {
+                Toast.makeText(DebugChangeEnvActivity.this, "denied", Toast.LENGTH_SHORT).show();
+            }
+        })
+        .onPermissionGranted(new OnPermissionGrantedListener() {
+            @Override
+            public void onPermissionGranted(int requestCode, int resultCode, Bundle data) {
+                Toast.makeText(DebugChangeEnvActivity.this, "granted", Toast.LENGTH_SHORT).show();
+            }
+        }).request();
 ```

@@ -29,8 +29,8 @@ public class PermissionRequestResultReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         boolean permissionGranted = intent.getBooleanExtra(DATA_RESULT, false);
-        int requestCode = intent.getIntExtra(PermissionActivity.EXTRA_REQUEST_CODE, 0);
-        Bundle data = intent.getBundleExtra(PermissionActivity.EXTRA_DATA_BUNDLE);
+        int requestCode = intent.getIntExtra(PermissionConst.EXTRA_REQUEST_CODE, 0);
+        Bundle data = intent.getBundleExtra(PermissionConst.EXTRA_DATA_BUNDLE);
         if (TextUtils.equals(action, ACTION_REQUEST_PERMISSION_RESULT) && permissionGranted) {
             result.onPermissionGranted(requestCode, data);
         } else {
